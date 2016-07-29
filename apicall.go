@@ -2,6 +2,7 @@ package p2pubmachine
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -11,8 +12,13 @@ import (
 	"github.com/iij/p2pubapi/protocol"
 )
 
+var endpoint = os.Getenv("IIJAPI_ENDPOINT")
+
 func (d *Driver) callapi(arg protocol.CommonArg, res interface{}) (err error) {
 	api := p2pubapi.NewAPI(d.AccessKey, d.SecretKey)
+	if endpoint != "" {
+		api.Endpoint = endpoint
+	}
 	if err = p2pubapi.Call(*api, arg, &res); err != nil {
 		log.Error(err)
 	}
