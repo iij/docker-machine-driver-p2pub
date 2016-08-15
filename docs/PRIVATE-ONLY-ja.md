@@ -14,9 +14,10 @@ docker-machine-driver-p2pubでプライベートネットワークにdocker-swar
 ## 踏み台サーバにdocker-machine一式をインストール
 
 ```
-[local]# docker-machine scp docker-machine-driver-p2pub.linux base:/usr/bin/docker-machine-driver-p2pub
 [local]# docker-machine ssh base
-[root@base]# wget https://github.com/docker/machine/releases/download/v0.8.0-rc2/docker-machine-Linux-x86_64
+[root@base]# wget https://github.com/iij/docker-machine-driver-p2pub/releases/download/0.9/docker-machine-driver-p2pub-linux-amd64
+[root@base]# install -c -m 755 docker-machine-driver-p2pub-linux-amd64 /usr/bin/docker-machine-driver-p2pub
+[root@base]# wget https://github.com/docker/machine/releases/download/v0.8.0/docker-machine-Linux-x86_64
 [root@base]# install -c -m 755 docker-machine-Linux-x86_64 /usr/bin/docker-machine
 ```
 
