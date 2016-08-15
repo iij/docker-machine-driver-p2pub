@@ -3,6 +3,7 @@ package p2pubmachine
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,12 +14,14 @@ import (
 )
 
 var endpoint = os.Getenv("IIJAPI_ENDPOINT")
+var insecure, _ = strconv.ParseBool(os.Getenv("IIJAPI_INSECURE"))
 
 func (d *Driver) callapi(arg protocol.CommonArg, res interface{}) (err error) {
 	api := p2pubapi.NewAPI(d.AccessKey, d.SecretKey)
 	if endpoint != "" {
 		api.Endpoint = endpoint
 	}
+	api.Insecure = insecure
 	if err = p2pubapi.Call(*api, arg, &res); err != nil {
 		log.Error(err)
 	}
