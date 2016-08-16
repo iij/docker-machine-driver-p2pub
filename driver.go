@@ -11,8 +11,10 @@ import (
 	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/log"
 	"github.com/docker/machine/libmachine/mcnflag"
+	"github.com/docker/machine/libmachine/provision"
 	"github.com/docker/machine/libmachine/ssh"
 	"github.com/docker/machine/libmachine/state"
+	"github.com/iij/docker-machine-driver-p2pub/oscmd"
 )
 
 const (
@@ -42,6 +44,18 @@ type Driver struct {
 	IbbServiceCode string
 	privateMode    string
 	addStorageType string
+}
+
+type openport struct {
+	port  int
+	proto string
+}
+
+var ports = []openport{
+	{2377, "tcp"}, // swarm
+	{7946, "udp"}, // swarm object store
+	{7946, "tcp"}, // swarm object store
+	{4789, "udp"}, // vxlan for overlay network
 }
 
 // NewDriver is constructor
@@ -147,31 +161,55 @@ func (d *Driver) Create() (err error) {
 	if err = d.vmpower("On", "Running"); err != nil {
 		return
 	}
-	if strings.Contains(d.ImageName, "CENTOS") || strings.Contains(d.ImageName, "RHEL") {
-		// open port (RHEL/CentOS)
-		err = d.centosInit()
+	var cmd oscmd.Oscmd
+	prov, err := provision.DetectProvisioner(d)
+	if err != nil {
+		return
 	}
-	return
-}
-
-func (d *Driver) centosInit() (err error) {
+	osr, err := prov.GetOsReleaseInfo()
+	if err != nil {
+		return
+	}
+	switch osr.ID {
+	case "centos":
+		cmd = oscmd.CentOS{}
+	case "rhel":
+		cmd = oscmd.RedHat{}
+	case "ubuntu":
+		cmd = oscmd.Ubuntu{}
+	default:
+		cmd = oscmd.CentOS{}
+	}
+	log.Debugf("%T", cmd)
+	var res []string
+	if res, err = d.osInit(cmd); err != nil {
+		log.Error(err)
+		return
+	}
 	if err = drivers.WaitForSSH(d); err != nil {
 		return
 	}
+	log.Debug("execute:", res)
+	_, err = d.sshCommands(res)
+	return
+}
+
+func (d *Driver) osInit(cmd oscmd.Oscmd) (res []string, err error) {
 	log.Infof("open port %d (for docker)", d.DockerPort)
-	if err = d.openPort(d.DockerPort, "tcp"); err != nil {
-		return
+	res = cmd.OpenFW(d.DockerPort, "tcp")
+	log.Debug("cmd1:", res)
+	for _, v := range ports {
+		log.Infof("open port %d/%s", v.port, v.proto)
+		res = append(res, cmd.OpenFW(v.port, v.proto)...)
 	}
+
 	netinfo := strings.Split(d.privateMode, ",")
 	if len(netinfo) == 2 {
 		log.Infof("set default gateway: %s", netinfo[0])
-		if err = d.setdefgw(netinfo[0]); err != nil {
-			return
-		}
+		res = append(res, cmd.DefGW(netinfo[0])...)
 		log.Infof("set dns: %s", netinfo[1])
-		if err = d.setdns(netinfo[1]); err != nil {
-			return
-		}
+		res = append(res, cmd.DNS([]string{netinfo[1]})...)
+		log.Debug("cmd3:", res)
 	}
 	return
 }
