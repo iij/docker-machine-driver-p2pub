@@ -22,3 +22,7 @@ func (l Ubuntu) DNS(addrs []string) []string {
 	res = append(res, "resolvconf -u")
 	return res
 }
+
+type Debian struct {
+	Ubuntu
+}

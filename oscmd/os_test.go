@@ -19,9 +19,31 @@ func TestRHEL(t *testing.T) {
 	}
 }
 
+func TestCentOS(t *testing.T) {
+	var os Oscmd
+	os = CentOS{}
+	t.Logf("testing %T %+v", os, os)
+	res := osInit(os)
+	t.Logf("res %+v", res)
+	if len(res) != 4 {
+		t.Fail()
+	}
+}
+
 func TestUbuntu(t *testing.T) {
 	var os Oscmd
 	os = Ubuntu{}
+	t.Logf("testing %T %+v", os, os)
+	res := osInit(os)
+	t.Logf("res %+v", res)
+	if len(res) != 2 {
+		t.Fail()
+	}
+}
+
+func TestDebian(t *testing.T) {
+	var os Oscmd
+	os = Debian{}
 	t.Logf("testing %T %+v", os, os)
 	res := osInit(os)
 	t.Logf("res %+v", res)

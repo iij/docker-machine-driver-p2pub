@@ -177,6 +177,8 @@ func (d *Driver) Create() (err error) {
 		cmd = oscmd.RedHat{}
 	case "ubuntu":
 		cmd = oscmd.Ubuntu{}
+	case "debian":
+		cmd = oscmd.Debian{}
 	default:
 		cmd = oscmd.CentOS{}
 	}
