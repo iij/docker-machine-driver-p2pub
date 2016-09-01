@@ -170,6 +170,7 @@ func (d *Driver) Create() (err error) {
 	if err != nil {
 		return
 	}
+	log.Info(osr.PrettyName)
 	switch osr.ID {
 	case "centos":
 		cmd = oscmd.CentOS{}
