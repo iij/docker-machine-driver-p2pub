@@ -1,7 +1,6 @@
 package p2pubmachine
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -315,24 +314,5 @@ func (d *Driver) sshCommands(cmd []string) (res []string, err error) {
 		}
 		res = append(res, r)
 	}
-	return
-}
-
-func (d *Driver) openPort(port int, proto string) (err error) {
-	cmds := []string{
-		fmt.Sprintf("firewall-cmd --add-port %d/%s", port, proto),
-		fmt.Sprintf("firewall-cmd --add-port %d/%s --permanent", port, proto),
-	}
-	_, err = d.sshCommands(cmds)
-	return
-}
-
-func (d *Driver) setdefgw(addr string) (err error) {
-	_, err = d.sshCommand(fmt.Sprintf("ip route add default via %s", addr))
-	return
-}
-
-func (d *Driver) setdns(addr string) (err error) {
-	_, err = d.sshCommand(fmt.Sprintf("sed -i.bak -e '$a nameserver %s' /etc/resolv.conf", addr))
 	return
 }
