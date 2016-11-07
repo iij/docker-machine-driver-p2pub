@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	imageName    = "S30GB_CENTOS7_64"
+	imageName    = "S30GB_UBUNTU14_64"
 	storageGroup = ""
 	serverGroup  = ""
 	serverType   = "VB0-1"
