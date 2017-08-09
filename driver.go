@@ -44,6 +44,7 @@ type Driver struct {
 	IbbServiceCode string
 	privateMode    string
 	addStorageType string
+	baseImage      string
 }
 
 type openport struct {
@@ -82,7 +83,10 @@ func (d *Driver) PreCreateCheck() error {
 	if d.privateMode != "" && len(strings.Split(d.privateMode, ",")) != 2 {
 		return fmt.Errorf("option format: --p2pub-private-only defgw,dns")
 	}
-	return nil
+	if d.baseImage != "" && len(strings.Split(d.baseImage, ",")) != 2 {                                           
+		return fmt.Errorf("option format: --p2pub-custom-image iarservicecode,imageid")
+	}
+  	return nil
 }
 
 // Create machine
@@ -120,6 +124,15 @@ func (d *Driver) Create() (err error) {
 		if err = d.waitstatus("systemstorage", d.IbaServiceCode, "InService", "NotAttached"); err != nil {
 			return
 		}
+	}
+	if d.baseImage != "" {
+		restoreParams := strings.Split(d.baseImage, ",")
+		if err = d.restore(restoreParams[0], restoreParams[1]); err != nil {
+ 			return
+ 		}
+ 		if err = d.waitstatus("systemstorage", d.IbaServiceCode, "InService", "NotAttached"); err != nil {
+ 			return
+ 		}
 	}
 	if d.IbbServiceCode == "" && d.addStorageType != "" {
 		if err = d.createdatadisk(); err != nil {
@@ -330,6 +343,10 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Name:  "p2pub-private-only",
 			Usage: "uses private network (does not attach global IP and setup defgw/dns)",
 		},
+		mcnflag.StringFlag{
+			Name:  "p2pub-custom-image",
+			Usage: "create system storage from custom image (http://manual.iij.jp/p2/pubapi/59940054.html)",
+		},
 	}
 }
 
@@ -348,6 +365,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.ImageName = flags.String("p2pub-system-storage")
 	d.privateMode = flags.String("p2pub-private-only")
 	d.addStorageType = flags.String("p2pub-data-storage")
+	d.baseImage = flags.String("p2pub-custom-image")
 	d.SetSwarmConfigFromFlags(flags)
 	if d.AccessKey == "" || d.SecretKey == "" || d.GisServiceCode == "" {
 		return fmt.Errorf("p2pub driver requires --p2pub-{access,secret}-key, --p2pub-gis option: %+v", d)
