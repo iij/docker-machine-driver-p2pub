@@ -112,18 +112,6 @@ func (d *Driver) Create() (err error) {
 		if err = d.setSysStlabel(d.MachineName); err != nil {
 			log.Warn("set label of SystemStorage failed:", err)
 		}
-		if err = ssh.GenerateSSHKey(d.GetSSHKeyPath()); err != nil {
-			log.Error(err)
-			return
-		}
-		var publicKey []byte
-		publicKey, err = ioutil.ReadFile(d.GetSSHKeyPath() + ".pub")
-		if err = d.setpubkey(string(publicKey)); err != nil {
-			return
-		}
-		if err = d.waitstatus("systemstorage", d.IbaServiceCode, "InService", "NotAttached"); err != nil {
-			return
-		}
 	}
 	if d.baseImage != "" {
 		restoreParams := strings.Split(d.baseImage, ",")
@@ -133,6 +121,18 @@ func (d *Driver) Create() (err error) {
  		if err = d.waitstatus("systemstorage", d.IbaServiceCode, "InService", "NotAttached"); err != nil {
  			return
  		}
+	}
+	if err = ssh.GenerateSSHKey(d.GetSSHKeyPath()); err != nil {
+		log.Error(err)
+		return
+	}
+	var publicKey []byte
+	publicKey, err = ioutil.ReadFile(d.GetSSHKeyPath() + ".pub")
+	if err = d.setpubkey(string(publicKey)); err != nil {
+		return
+	}
+	if err = d.waitstatus("systemstorage", d.IbaServiceCode, "InService", "NotAttached"); err != nil {
+		return
 	}
 	if d.IbbServiceCode == "" && d.addStorageType != "" {
 		if err = d.createdatadisk(); err != nil {
