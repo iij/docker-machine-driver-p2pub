@@ -268,6 +268,19 @@ func (d *Driver) removevm() error {
 	return nil
 }
 
+func (d *Driver) restore(iarServiceCode string, imageId string) error {
+	log.Info("Restore system storage.")
+	arg := protocol.Restore{
+		GisServiceCode: d.GisServiceCode,
+		IbaServiceCode: d.IbaServiceCode,
+		ImageId: imageId,
+		IarServiceCode: iarServiceCode,
+		Image: "Archive",
+	}
+	var res = protocol.RestoreResponse{}
+	return d.callapi(arg, &res)
+}
+
 func (d *Driver) setVMlabel(l string) error {
 	log.Info("setting vm label", l)
 	arg := protocol.VMLabelSet{
