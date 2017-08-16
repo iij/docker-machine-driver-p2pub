@@ -102,7 +102,18 @@ func (d *Driver) Create() (err error) {
 			log.Warn("set label of VM failed:", err)
 		}
 	}
-	if d.IbaServiceCode == "" {
+	if d.baseImage != "" {
+		restoreParams := strings.Split(d.baseImage, ",")
+		if err = d.restore(restoreParams[0], restoreParams[1]); err != nil {
+ 			return
+ 		}
+ 		if err = d.waitstatus("systemstorage", d.IbaServiceCode, "InService", "NotAttached"); err != nil {
+ 			return
+ 		}
+		if err = d.setSysStlabel(d.MachineName); err != nil {
+			log.Warn("set label of SystemStorage failed:", err)
+		}
+	} else if d.IbaServiceCode == "" {
 		if err = d.createdisk(); err != nil {
 			return
 		}
@@ -112,15 +123,6 @@ func (d *Driver) Create() (err error) {
 		if err = d.setSysStlabel(d.MachineName); err != nil {
 			log.Warn("set label of SystemStorage failed:", err)
 		}
-	}
-	if d.baseImage != "" {
-		restoreParams := strings.Split(d.baseImage, ",")
-		if err = d.restore(restoreParams[0], restoreParams[1]); err != nil {
- 			return
- 		}
- 		if err = d.waitstatus("systemstorage", d.IbaServiceCode, "InService", "NotAttached"); err != nil {
- 			return
- 		}
 	}
 	if err = ssh.GenerateSSHKey(d.GetSSHKeyPath()); err != nil {
 		log.Error(err)

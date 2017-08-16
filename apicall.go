@@ -270,15 +270,35 @@ func (d *Driver) removevm() error {
 
 func (d *Driver) restore(iarServiceCode string, imageId string) error {
 	log.Info("Restore system storage.")
-	arg := protocol.Restore{
+
+	get_arg := protocol.CustomOSImageGet{
+		GisServiceCode: d.GisServiceCode,
+		IarServiceCode: iarServiceCode,
+		ImageId: imageId,
+	}
+	var get_res = protocol.CustomOSImageGetResponse{}
+	if err := d.callapi(get_arg, &get_res); err != nil {
+		return err
+	}
+
+	d.ImageName = get_res.Type
+
+	if err := d.createdisk(); err != nil {
+		return err
+	}
+	if err := d.waitstatus("systemstorage", d.IbaServiceCode, "InService", "NotAttached"); err != nil {
+		return err
+	}
+	
+	restore_arg := protocol.Restore{
 		GisServiceCode: d.GisServiceCode,
 		IbaServiceCode: d.IbaServiceCode,
 		ImageId: imageId,
 		IarServiceCode: iarServiceCode,
 		Image: "Archive",
 	}
-	var res = protocol.RestoreResponse{}
-	return d.callapi(arg, &res)
+	var restore_res = protocol.RestoreResponse{}
+	return d.callapi(restore_arg, &restore_res)
 }
 
 func (d *Driver) setVMlabel(l string) error {
