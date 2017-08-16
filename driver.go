@@ -46,6 +46,7 @@ type Driver struct {
 	addStorageType string
 	baseImage      string
 	extraPorts     string
+	customARP      bool
 }
 
 type openport struct {
@@ -240,6 +241,12 @@ func (d *Driver) osInit(cmd oscmd.Oscmd) (res []string, err error) {
 		res = append(res, cmd.DNS([]string{netinfo[1]})...)
 		log.Debug("cmd3:", res)
 	}
+
+	if d.customARP {
+		log.Infof("set arp parameters")
+		res = append(res, cmd.ARP()...)
+	}
+
 	return
 }
 
@@ -364,6 +371,10 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Name: "p2pub-extra-ports",
 			Usage: "open extra ports",
 		},
+		mcnflag.BoolFlag{
+			Name: "p2pub-reply-any-arp",
+			Usage: "advanced: set kernel parameters to reply any arp requests",
+		},
 	}
 }
 
@@ -384,6 +395,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.addStorageType = flags.String("p2pub-data-storage")
 	d.baseImage = flags.String("p2pub-custom-image")
 	d.extraPorts = flags.String("p2pub-extra-ports")
+	d.customARP = flags.Bool("p2pub-reply-any-arp")
 	d.SetSwarmConfigFromFlags(flags)
 	if d.AccessKey == "" || d.SecretKey == "" || d.GisServiceCode == "" {
 		return fmt.Errorf("p2pub driver requires --p2pub-{access,secret}-key, --p2pub-gis option: %+v", d)
