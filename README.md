@@ -56,6 +56,9 @@ Options
 | `--p2pub-ibb` | `IBBSERVICECODE` | | Data Storage Service Code |
 | `--p2pub-ivm` | `IVMSERVICECODE` | | Virtual Machine Service Code. add new if not specified |
 | `--p2pub-private-only` | | | don't attach global IP and set up DNS/Gateway for private network |
+| `--p2pub-custom-image` | | | Create boot device from storage archive. specify in the form of `iar service code`,`image id` |
+| `--p2pub-extra-ports` | | | Open some extra ports. specify in the form of `portnum`/`protocol(tcp,udp)` |
+| `--p2pub-reply-any-arp` | | | Set kernel parameters to reply any ARP requests. |
 
 ### create Swarm cluster
 

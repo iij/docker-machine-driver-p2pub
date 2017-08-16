@@ -44,6 +44,9 @@ type Driver struct {
 	IbbServiceCode string
 	privateMode    string
 	addStorageType string
+	baseImage      string
+	extraPorts     string
+	customARP      bool
 }
 
 type openport struct {
@@ -82,7 +85,20 @@ func (d *Driver) PreCreateCheck() error {
 	if d.privateMode != "" && len(strings.Split(d.privateMode, ",")) != 2 {
 		return fmt.Errorf("option format: --p2pub-private-only defgw,dns")
 	}
-	return nil
+	if d.baseImage != "" && len(strings.Split(d.baseImage, ",")) != 2 {                                           
+		return fmt.Errorf("option format: --p2pub-custom-image iarservicecode,imageid")
+	}
+	if d.extraPorts != "" {
+		for _, elm := range strings.Split(d.extraPorts, ",") {
+			port := strings.Split(elm, "/")
+			num, err := strconv.Atoi(port[0])
+			if len(port) != 2 || (port[1] != "tcp" && port[1] != "udp") || err != nil {
+				return fmt.Errorf("option format: --p2pub-extra-ports <portnum>/<protocol>,<portnum>/protocol>,...")				
+			}
+			ports = append(ports, openport{num, port[1]})
+		}
+	}
+  	return nil
 }
 
 // Create machine
@@ -98,7 +114,18 @@ func (d *Driver) Create() (err error) {
 			log.Warn("set label of VM failed:", err)
 		}
 	}
-	if d.IbaServiceCode == "" {
+	if d.baseImage != "" {
+		restoreParams := strings.Split(d.baseImage, ",")
+		if err = d.restore(restoreParams[0], restoreParams[1]); err != nil {
+ 			return
+ 		}
+ 		if err = d.waitstatus("systemstorage", d.IbaServiceCode, "InService", "NotAttached"); err != nil {
+ 			return
+ 		}
+		if err = d.setSysStlabel(d.MachineName); err != nil {
+			log.Warn("set label of SystemStorage failed:", err)
+		}
+	} else if d.IbaServiceCode == "" {
 		if err = d.createdisk(); err != nil {
 			return
 		}
@@ -108,18 +135,18 @@ func (d *Driver) Create() (err error) {
 		if err = d.setSysStlabel(d.MachineName); err != nil {
 			log.Warn("set label of SystemStorage failed:", err)
 		}
-		if err = ssh.GenerateSSHKey(d.GetSSHKeyPath()); err != nil {
-			log.Error(err)
-			return
-		}
-		var publicKey []byte
-		publicKey, err = ioutil.ReadFile(d.GetSSHKeyPath() + ".pub")
-		if err = d.setpubkey(string(publicKey)); err != nil {
-			return
-		}
-		if err = d.waitstatus("systemstorage", d.IbaServiceCode, "InService", "NotAttached"); err != nil {
-			return
-		}
+	}
+	if err = ssh.GenerateSSHKey(d.GetSSHKeyPath()); err != nil {
+		log.Error(err)
+		return
+	}
+	var publicKey []byte
+	publicKey, err = ioutil.ReadFile(d.GetSSHKeyPath() + ".pub")
+	if err = d.setpubkey(string(publicKey)); err != nil {
+		return
+	}
+	if err = d.waitstatus("systemstorage", d.IbaServiceCode, "InService", "NotAttached"); err != nil {
+		return
 	}
 	if d.IbbServiceCode == "" && d.addStorageType != "" {
 		if err = d.createdatadisk(); err != nil {
@@ -214,6 +241,12 @@ func (d *Driver) osInit(cmd oscmd.Oscmd) (res []string, err error) {
 		res = append(res, cmd.DNS([]string{netinfo[1]})...)
 		log.Debug("cmd3:", res)
 	}
+
+	if d.customARP {
+		log.Infof("set arp parameters")
+		res = append(res, cmd.ARP()...)
+	}
+
 	return
 }
 
@@ -330,6 +363,18 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Name:  "p2pub-private-only",
 			Usage: "uses private network (does not attach global IP and setup defgw/dns)",
 		},
+		mcnflag.StringFlag{
+			Name:  "p2pub-custom-image",
+			Usage: "create system storage from custom image (http://manual.iij.jp/p2/pubapi/59940054.html)",
+		},
+		mcnflag.StringFlag{
+			Name: "p2pub-extra-ports",
+			Usage: "open extra ports",
+		},
+		mcnflag.BoolFlag{
+			Name: "p2pub-reply-any-arp",
+			Usage: "advanced: set kernel parameters to reply any arp requests",
+		},
 	}
 }
 
@@ -348,6 +393,9 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.ImageName = flags.String("p2pub-system-storage")
 	d.privateMode = flags.String("p2pub-private-only")
 	d.addStorageType = flags.String("p2pub-data-storage")
+	d.baseImage = flags.String("p2pub-custom-image")
+	d.extraPorts = flags.String("p2pub-extra-ports")
+	d.customARP = flags.Bool("p2pub-reply-any-arp")
 	d.SetSwarmConfigFromFlags(flags)
 	if d.AccessKey == "" || d.SecretKey == "" || d.GisServiceCode == "" {
 		return fmt.Errorf("p2pub driver requires --p2pub-{access,secret}-key, --p2pub-gis option: %+v", d)

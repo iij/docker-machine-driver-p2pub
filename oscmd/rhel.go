@@ -20,6 +20,17 @@ func (l RedHat) DefGW(addr string) []string {
 	}
 }
 
+func (l RedHat) ARP() []string {
+	return []string{
+		"echo 'net.ipv4.conf.default.arp_ignore = 0' >> /etc/sysctl.conf",
+		"echo 'net.ipv4.conf.default.arp_announce = 0' >> /etc/sysctl.conf",
+		"echo 'net.ipv4.conf.default.arp_notify = 0' >> /etc/sysctl.conf",
+		"echo 'net.ipv4.conf.default.arp_filter = 0' >> /etc/sysctl.conf",
+		"echo 'net.ipv4.conf.default.arp_accept = 0' >> /etc/sysctl.conf",
+		"sysctl -p",
+	}
+}
+
 type CentOS struct {
 	RedHat
 }
