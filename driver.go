@@ -45,6 +45,7 @@ type Driver struct {
 	privateMode    string
 	addStorageType string
 	baseImage      string
+	extraPorts     string
 }
 
 type openport struct {
@@ -85,6 +86,16 @@ func (d *Driver) PreCreateCheck() error {
 	}
 	if d.baseImage != "" && len(strings.Split(d.baseImage, ",")) != 2 {                                           
 		return fmt.Errorf("option format: --p2pub-custom-image iarservicecode,imageid")
+	}
+	if d.extraPorts != "" {
+		for _, elm := range strings.Split(d.extraPorts, ",") {
+			port := strings.Split(elm, "/")
+			num, err := strconv.Atoi(port[0])
+			if len(port) != 2 || (port[1] != "tcp" && port[1] != "udp") || err != nil {
+				return fmt.Errorf("option format: --p2pub-extra-ports <portnum>/<protocol>,<portnum>/protocol>,...")				
+			}
+			ports = append(ports, openport{num, port[1]})
+		}
 	}
   	return nil
 }
@@ -349,6 +360,10 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Name:  "p2pub-custom-image",
 			Usage: "create system storage from custom image (http://manual.iij.jp/p2/pubapi/59940054.html)",
 		},
+		mcnflag.StringFlag{
+			Name: "p2pub-extra-ports",
+			Usage: "open extra ports",
+		},
 	}
 }
 
@@ -368,6 +383,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.privateMode = flags.String("p2pub-private-only")
 	d.addStorageType = flags.String("p2pub-data-storage")
 	d.baseImage = flags.String("p2pub-custom-image")
+	d.extraPorts = flags.String("p2pub-extra-ports")
 	d.SetSwarmConfigFromFlags(flags)
 	if d.AccessKey == "" || d.SecretKey == "" || d.GisServiceCode == "" {
 		return fmt.Errorf("p2pub driver requires --p2pub-{access,secret}-key, --p2pub-gis option: %+v", d)
