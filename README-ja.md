@@ -48,7 +48,7 @@ Docker MachineのP2PUB向けドライバです。
 | `--p2pub-gis` | `GISSERVICECODE` | | P2(GIS)サービスコード(**必須**) |
 | `--p2pub-server-type` | | VB0-1 | 仮想マシンのグレード -> [仮想サーバ品目](http://manual.iij.jp/p2/pubapi/59949011.html) |
 | `--p2pub-server-group` | | | サーバグループ (`A` or `B`) |
-| `--p2pub-system-storage` | | S30GB_CENTOS7_64 | システムストレージのグレード(OSを選択) -> [ストレージ品目](http://manual.iij.jp/p2/pubapi/59949023.html) |
+| `--p2pub-system-storage` | | S30GB_UBUNTU14_64 | システムストレージのグレード(OSを選択) -> [ストレージ品目](http://manual.iij.jp/p2/pubapi/59949023.html) |
 | `--p2pub-data-storage` | | | 追加ストレージのグレード -> [ストレージ品目](http://manual.iij.jp/p2/pubapi/59949023.html) |
 | `--p2pub-storage-group` | | | ストレージグループ (`Y` or `Z`) |
 | `--p2pub-docker-port` | | 2376 | Dockerデーモンのポート番号 |

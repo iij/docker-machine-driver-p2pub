@@ -48,7 +48,7 @@ Options
 | `--p2pub-gis` | `GISSERVICECODE` | | P2(GIS) Service Code(**required**) |
 | `--p2pub-server-type` | | VB0-1 | Grade of Virtual Machine -> [仮想サーバ品目](http://manual.iij.jp/p2/pubapi/59949011.html) |
 | `--p2pub-server-group` | | | Server Group (`A` or `B`) |
-| `--p2pub-system-storage` | | S30GB_CENTOS7_64 | Type of System Storage(Operating System) -> [ストレージ品目](http://manual.iij.jp/p2/pubapi/59949023.html) |
+| `--p2pub-system-storage` | | S30GB_UBUNTU14_64 | Type of System Storage(Operating System) -> [ストレージ品目](http://manual.iij.jp/p2/pubapi/59949023.html) |
 | `--p2pub-data-storage` | | | Grade of Additional Storage -> [ストレージ品目](http://manual.iij.jp/p2/pubapi/59949023.html) |
 | `--p2pub-storage-group` | | | Storage Group (`Y` or `Z`) |
 | `--p2pub-docker-port` | | 2376 | Port Number of Docker daemon |
